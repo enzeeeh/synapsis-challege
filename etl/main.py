@@ -2,6 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import requests
 import os
+import itertools
 
 # --- DB connection setup ---
 user = os.getenv("POSTGRES_USER", "user")
@@ -41,7 +42,6 @@ if not anomaly_df.empty:
 
     print("⚠️ Anomalies saved to table: production_anomalies")
 
-
 # --- Replace negative tons with 0 ---
 prod_df.loc[prod_df["tons_extracted"] < 0, "tons_extracted"] = 0
 
@@ -55,17 +55,36 @@ prod_agg = prod_df.groupby(["date"]).agg(
 sensor_df = pd.read_csv("/dataset/equipment_sensors.csv", parse_dates=["timestamp"])
 sensor_df["date"] = sensor_df["timestamp"].dt.date
 
-# --- Aggregate equipment utilization ---
-equip_agg = sensor_df.groupby(["date"]).agg(
+# --- Fill missing equipment data with last known value ---
+all_dates = sorted(sensor_df["date"].unique())
+all_equipment_ids = sensor_df["equipment_id"].unique()
+all_combinations = pd.DataFrame(list(itertools.product(all_dates, all_equipment_ids)), columns=["date", "equipment_id"])
+
+agg_df = sensor_df.groupby(["date", "equipment_id"]).agg(
     active_hours=("status", lambda x: (x == "active").sum()),
     total_hours=("status", "count"),
     total_fuel_consumption=("fuel_consumption", "sum")
 ).reset_index()
 
-equip_agg["equipment_utilization"] = (equip_agg["active_hours"] / equip_agg["total_hours"]) * 100
-equip_agg["equipment_active_hours"] = equip_agg["active_hours"]
-equip_agg["equipment_total_hours"] = equip_agg["total_hours"]
-equip_agg = equip_agg[["date", "equipment_utilization", "equipment_active_hours", "equipment_total_hours", "total_fuel_consumption"]]
+agg_df["equipment_utilization"] = (agg_df["active_hours"] / agg_df["total_hours"]) * 100
+
+# Merge combinations to find missing
+merged = pd.merge(all_combinations, agg_df, on=["date", "equipment_id"], how="left")
+
+# Sort and forward fill
+merged = merged.sort_values(by=["equipment_id", "date"]).reset_index(drop=True)
+merged["active_hours"] = merged.groupby("equipment_id")["active_hours"].ffill().fillna(0)
+merged["total_hours"] = merged.groupby("equipment_id")["total_hours"].ffill().fillna(0)
+merged["total_fuel_consumption"] = merged.groupby("equipment_id")["total_fuel_consumption"].ffill().fillna(0)
+merged["equipment_utilization"] = merged.groupby("equipment_id")["equipment_utilization"].ffill().fillna(0)
+
+# Final daily aggregation
+equip_agg = merged.groupby("date").agg(
+    equipment_utilization=("equipment_utilization", "mean"),
+    equipment_active_hours=("active_hours", "sum"),
+    equipment_total_hours=("total_hours", "sum"),
+    total_fuel_consumption=("total_fuel_consumption", "sum")
+).reset_index()
 
 # --- Merge production metrics ---
 merged_df = pd.merge(
