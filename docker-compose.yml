@@ -1,0 +1,61 @@
+services:
+  # PostgreSQL as data warehouse
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Metabase internal DB (to store configs, dashboards)
+  metabase-db:
+    image: postgres:13
+    container_name: metabase-db
+    environment:
+      POSTGRES_DB: metabase
+      POSTGRES_USER: metabase
+      POSTGRES_PASSWORD: metabase_pass
+    volumes:
+      - metabase_db_data:/var/lib/postgresql/data
+
+  # Metabase dashboard service
+  metabase:
+    image: metabase/metabase:v0.45.2
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: metabase
+      MB_DB_PASS: metabase_pass
+      MB_DB_HOST: metabase-db
+    depends_on:
+      - metabase-db
+
+  # ETL app service
+  etl:
+    build:
+      context: ./etl
+    container_name: etl
+    depends_on:
+      - postgres
+    volumes:
+      - ./etl:/app
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    command: ["python", "main.py"]
+
+volumes:
+  postgres_data:
+  metabase_db_data:

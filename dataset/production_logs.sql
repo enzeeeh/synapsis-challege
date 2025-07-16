@@ -1,11 +1,11 @@
 -- Create database
-CREATE DATABASE IF NOT EXISTS coal_mining;
-USE coal_mining;
+-- CREATE DATABASE IF NOT EXISTS coal_mining;
+-- USE coal_mining;
 
 -- Create mines table
 
 CREATE TABLE IF NOT EXISTS mines (
-    mine_id INT AUTO_INCREMENT PRIMARY KEY,
+    mine_id SERIAL PRIMARY KEY,
     mine_code VARCHAR(10) NOT NULL,
     mine_name VARCHAR(50) NOT NULL,
     location VARCHAR(100) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS mines (
 -- Create production_logs table
 
 CREATE TABLE IF NOT EXISTS production_logs (
-    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    log_id SERIAL PRIMARY KEY,
     date DATE NOT NULL,
     mine_id INT NOT NULL,
     shift VARCHAR(10) NOT NULL,
@@ -27,9 +27,9 @@ CREATE TABLE IF NOT EXISTS production_logs (
 
 
 -- Insert mine data
-INSERT INTO mines (mine_id, mine_code, mine_name, location, operational_status) VALUES (1, 'MINE001', 'Bukit Bara', 'Berau, Kalimantan', 'Active');
-INSERT INTO mines (mine_id, mine_code, mine_name, location, operational_status) VALUES (2, 'MINE002', 'Gunung Hitam', 'Berau, Kalimantan', 'Active');
-INSERT INTO mines (mine_id, mine_code, mine_name, location, operational_status) VALUES (3, 'MINE003', 'Sumber Jaya', 'Berau, Kalimantan', 'Maintenance');
+INSERT INTO mines (mine_code, mine_name, location, operational_status) VALUES ('MINE001', 'Bukit Bara', 'Berau, Kalimantan', 'Active');
+INSERT INTO mines (mine_code, mine_name, location, operational_status) VALUES ('MINE002', 'Gunung Hitam', 'Berau, Kalimantan', 'Active');
+INSERT INTO mines (mine_code, mine_name, location, operational_status) VALUES ('MINE003', 'Sumber Jaya', 'Berau, Kalimantan', 'Maintenance');
 
 -- Insert production data
 INSERT INTO production_logs (date, mine_id, shift, tons_extracted, quality_grade) VALUES ('2024-07-01', 1, 'Day', -195.47, 4.3);
