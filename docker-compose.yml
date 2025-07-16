@@ -48,6 +48,7 @@ services:
       - postgres
     volumes:
       - ./etl:/app
+      - ./dataset:/dataset
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
