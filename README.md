@@ -76,6 +76,6 @@ docker-compose run etl python main.py
 
 # Open Metabase dashboard
 http://localhost:3000
-
+```
 
 <img width="1920" height="1129" alt="dashboad" src="https://github.com/user-attachments/assets/f1efe584-015d-4cd5-9578-f1f59240fa89" />
