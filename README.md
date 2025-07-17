@@ -79,3 +79,5 @@ http://localhost:3000
 ```
 
 <img width="1920" height="1129" alt="dashboad" src="https://github.com/user-attachments/assets/f1efe584-015d-4cd5-9578-f1f59240fa89" />
+
+![Production Forecast](https://github.com/user-attachments/assets/bc8110e6-ac31-4a5d-b0e1-6247ba294720)
