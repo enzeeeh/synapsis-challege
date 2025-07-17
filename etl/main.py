@@ -102,14 +102,14 @@ def get_rainfall(date_str):
     url = (
         "https://archive-api.open-meteo.com/v1/archive"
         "?latitude=2.0167&longitude=117.3000"
-        f"&daily=precipitation_sum&timezone=Asia/Jakarta"
+        f"&daily=temperature_2m_mean&timezone=Asia/Jakarta"
         f"&start_date={date_str}&end_date={date_str}"
     )
     response = requests.get(url)
     data = response.json()
 
-    if "daily" in data and "precipitation_sum" in data["daily"]:
-        return data["daily"]["precipitation_sum"][0]
+    if "daily" in data and "temperature_2m_mean" in data["daily"]:
+        return data["daily"]["temperature_2m_mean"][0]
     else:
         return 0.0
 
