@@ -100,9 +100,9 @@ merged_df["fuel_efficiency"] = merged_df["total_fuel_consumption"] / merged_df["
 # --- Fetch rainfall data from API ---
 def get_rainfall(date_str):
     url = (
-        "https://api.open-meteo.com/v1/forecast"
+        "https://archive-api.open-meteo.com/v1/archive"
         "?latitude=2.0167&longitude=117.3000"
-        f"&daily=temperature_2m_mean,precipitation_sum&timezone=Asia/Jakarta"
+        f"&daily=precipitation_sum&timezone=Asia/Jakarta"
         f"&start_date={date_str}&end_date={date_str}"
     )
     response = requests.get(url)
@@ -112,6 +112,7 @@ def get_rainfall(date_str):
         return data["daily"]["precipitation_sum"][0]
     else:
         return 0.0
+
 
 rainfall_data = []
 for d in merged_df["date"]:
@@ -144,6 +145,30 @@ with engine.connect() as conn:
         );
     """))
     conn.commit()
+
+
+# --- Validation Rules ---
+violations = []
+
+for _, row in merged_df.iterrows():
+    date = row["date"]
+
+    if row["total_production_daily"] < 0:
+        violations.append(f"{date} - ❌ Negative production: {row['total_production_daily']}")
+
+    if row["equipment_utilization"] < 0 or row["equipment_utilization"] > 100:
+        violations.append(f"{date} - ❌ Equipment utilization out of range: {row['equipment_utilization']}")
+
+    if pd.isna(row["rainfall_mm"]):
+        violations.append(f"{date} - ❌ Missing rainfall data")  
+
+if violations:
+    with open("/app/logs/validation_errors.log", "w") as f:
+        for v in violations:
+            f.write(v + "\n")
+    print("⚠️ Validation errors found. Logged to logs/validation_errors.log")
+else:
+    print("✅ All validation checks passed.")  
 
 # --- Load final merged data ---
 merged_df.to_sql("daily_production_metrics", engine, if_exists="replace", index=False)

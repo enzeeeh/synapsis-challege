@@ -1,0 +1,9 @@
+What you want to do		Command
+Stop all services		docker-compose down
+Start again later without logs	docker-compose up -d
+Start again later with logs	docker-compose up
+Check running services		docker ps
+Re-run ETL script		docker-compose run etl python main.py
+
+
+pass metabase = admin2134
